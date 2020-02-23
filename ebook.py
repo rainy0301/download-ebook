@@ -5,6 +5,7 @@ import time
 import json
 from urllib import parse
 from bs4 import BeautifulSoup 
+from send_email import send_mail
 
 s = Session()
 
@@ -81,7 +82,10 @@ def get_ctfile_download_url(dow_url):
     dow_url3 = 'https://webapi.400gb.com/get_file_url.php'
     p2 = s.get(dow_url3,headers=headers2,params=file_data)
     dow_url4 = json.loads(p2.text)['downurl']
-    name,ext = dow_url4.split('?')[0].split('/')[-1].split('.')
+    l = dow_url4.split('?')[0].split('/')[-1].split('.')
+    ext = l[-1]
+    name = '.'.join(l[:-1])
+    # name,ext = dow_url4.split('?')[0].split('/')[-1].split('.')
     name = parse.unquote(name)
     name = name+'.'+ext
     return dow_url4, name
@@ -130,8 +134,7 @@ def down_libgen_book(book_url):
             ext = a_list[idx+1].text
     name = title+'.'+ext
     tb = bs.find('table').find_all('table')[-1]
-    d_url_list = tb.find_all('a')[:2
-    ]
+    d_url_list = tb.find_all('a')[:2]
     for u in d_url_list:
         print('try: ',u.text)
         durl = u['href']
@@ -154,7 +157,7 @@ def down_libgen_book(book_url):
             if r=='ok':
                 break
 
-    return 'ok'
+    return 'ok',name
 
 
 if __name__ == "__main__":
@@ -169,9 +172,11 @@ if __name__ == "__main__":
         d_url,name = get_ctfile_download_url(book_url)
         r = DownOneFile(d_url,name)
     elif 'libgen' in book_url:
-        r = down_libgen_book(book_url)
+        r,name = down_libgen_book(book_url)
     if r=='ok':
         print('发送邮件')
+        ok = send_mail('test',att_file=[name],has_att=1,receiver='ivy_wangchen_5TJk0m@kindle.com')
+        print(ok)
 
 
 
